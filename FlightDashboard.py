@@ -1,3 +1,9 @@
+# Based onhttps://github.com/mnokka/flight_transponder
+# UI implemented with Curses
+#
+# mika.nokka1@gmail.com October 2026
+#
+
 
 import curses
 from curses import wrapper
@@ -6,6 +12,7 @@ import datetime
 import locale
 import json
 import os
+import random
 
 # --------------------------------------------------
 # ASETUKSET
@@ -14,7 +21,9 @@ import os
 try:
     locale.setlocale(locale.LC_TIME, "fi_FI.UTF-8")
 except locale.Error:
-    pass
+    print(f"VAROITUS: Suomi localea ei saatu käyttöön: {e}")
+    print(f"Käytössä oleva locale: {locale.setlocale(locale.LC_TIME, None)}")
+
 
 map_file = "map.html"
 dashboard_file = ""
@@ -24,6 +33,7 @@ StartTime = time.monotonic()
 
 JSON_DIR = "./json_data"
 JSON_FILE = os.path.join(JSON_DIR, "aircraft_backup.json")
+EXCEL_FILE = "./aircraftDatabase.csv"
 
 
 # --------------------------------------------------
@@ -63,6 +73,7 @@ def PrintAircraftList(stdscr, planes, x1, y1):
     y1 += 1
 
     stdscr.addstr(
+
         y1, x1,
         "-" * min(len(headers), max_width)
     )
@@ -101,13 +112,33 @@ def PrintAircraftList(stdscr, planes, x1, y1):
 # PÄÄNÄYTTÖ
 # --------------------------------------------------
 
-def PrintScreen(stdscr, planes):
+def PrintScreen(stdscr, planes,systemmessage):
+
+    ###### systemmessage
+    if not hasattr(PrintScreen, "message"):
+        PrintScreen.message = ""
+        PrintScreen.message_time = 0
+
+    if systemmessage:
+        if systemmessage != PrintScreen.message:
+            PrintScreen.message = systemmessage
+            PrintScreen.message_time = time.monotonic()
+
+    if time.monotonic() - PrintScreen.message_time >= 10:
+        PrintScreen.message = ""
+
+    systemmessage = PrintScreen.message 
     x1 = 2
-    y1 = 1
+    y1 = 0
+    ######
+    
 
     stdscr.erase()
     stdscr.box()
 
+    stdscr.addstr(y1, x1,systemmessage,curses.A_BOLD) 
+    y1=y1+1
+     
     now = datetime.datetime.now()
 
     paivays = now.strftime("%d.%m.%Y")
@@ -150,6 +181,7 @@ def PrintScreen(stdscr, planes):
         ohje[:max(0, curses.COLS - x1 - 1)]
     )
     y1 += 1
+    
 
     viiva = "-" * max(0, curses.COLS - x1 - 2)
     stdscr.addstr(y1, x1, viiva)
@@ -225,8 +257,20 @@ def main(stdscr):
 
     while True:
         planes = ReadAircraftData()
+     
+        systemmessage = ""
+        if not planes:
+            systemmessage = "ERROR: AIRCRAFT DATA NOT FOUND"
+        elif random.randint(1, 20) == 1:
+            systemmessage = random.choice([
+                "TEST: New aircraft detected",
+                "TEST: JSON data updated",
+                "TEST: Signal weak",
+                "TEST: Aircraft data received"
+            ])
 
-        PrintScreen(stdscr, planes)
+        
+        PrintScreen(stdscr, planes,systemmessage)
 
         # Päivitä näyttö noin sekunnin välein.
         for _ in range(10):
