@@ -172,7 +172,7 @@ def PrintScreen(stdscr, planes,systemmessage,bottommessage):
 
     otsikko = (
         f"{paivan_nimi} {paivays}  {kello}       "
-        f"Ajoaika: {hh:02d}:{mm:02d}:{ss:02d}"
+        f"Running time: {hh:02d}:{mm:02d}:{ss:02d}"
     )
     stdscr.addstr(y1, 2,otsikko,curses.A_BOLD)
     ##########
@@ -184,11 +184,11 @@ def PrintScreen(stdscr, planes,systemmessage,bottommessage):
         f"Dump file:{dump_file}   "
         f"Dashboard file:{dashboard_file}"
     )
-    stdscr.addstr(y1, x1,tiedostot)
+    stdscr.addstr(y1, x1,tiedostot,curses.A_DIM)
     y1 += 1
 
     ohje = "s - Save data    m - Save map"
-    stdscr.addstr(y1, x1,ohje)
+    stdscr.addstr(y1, x1,ohje,curses.A_DIM)
     y1 += 1
     ################
 
