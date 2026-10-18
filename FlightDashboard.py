@@ -138,6 +138,7 @@ def PrintScreen(stdscr, planes,systemmessage,bottommessage):
     if not hasattr(PrintScreen, "message"):
         PrintScreen.message = ""
         PrintScreen.message_time = 0
+        PrintScreen.system_message_alarmed = 0
 
     if systemmessage:
         if systemmessage != PrintScreen.message:
@@ -146,8 +147,14 @@ def PrintScreen(stdscr, planes,systemmessage,bottommessage):
 
     if time.monotonic() - PrintScreen.message_time >= 10:
         PrintScreen.message = ""
+        PrintScreen.system_message_alarmed = 0
+     
 
     if PrintScreen.message: 
+        if (not PrintScreen.system_message_alarmed):
+            beep()
+            flash_screen()
+            PrintScreen.system_message_alarmed = 1
         stdscr.addstr(0, 5,PrintScreen.message,curses.A_REVERSE) 
     ######
     
@@ -199,6 +206,7 @@ def PrintScreen(stdscr, planes,systemmessage,bottommessage):
     if not hasattr(PrintScreen, "bottom_message"):
             PrintScreen.bottom_message = ""
             PrintScreen.bottom_message_time = 0
+            PrintScreen.bottom_message_alarmed = 0
 
     if bottommessage:
         if bottommessage != PrintScreen.bottom_message:
@@ -207,12 +215,17 @@ def PrintScreen(stdscr, planes,systemmessage,bottommessage):
 
     if time.monotonic() - PrintScreen.bottom_message_time >= 15:
         PrintScreen.bottom_message = ""
+        PrintScreen.bottom_message_alarmed = 0
 
     if PrintScreen.bottom_message:
         rows, cols = stdscr.getmaxyx()
         bottom_message = PrintScreen.bottom_message
         y = rows - 1
         x = 5
+        if (not PrintScreen.bottom_message_alarmed):
+            beep()
+            flash_screen()
+            PrintScreen.bottom_message_alarmed = 1
         stdscr.addstr(y, x, PrintScreen.bottom_message,curses.A_REVERSE)
 
     ######################
@@ -250,6 +263,17 @@ def CheckQuit(stdscr):
         return "Y"
 
     return "N"
+
+# --------------------------------------------------
+# UTILITIES
+# --------------------------------------------------
+
+def beep():
+    os.system("paplay /usr/share/sounds/freedesktop/stereo/complete.oga &")
+
+
+def flash_screen():
+    curses.flash()
 
 
 # --------------------------------------------------
