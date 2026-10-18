@@ -1,5 +1,5 @@
-# Based onhttps://github.com/mnokka/flight_transponder
-# UI implemented with Curses
+# Based on https://github.com/mnokka/flight_transponder
+# UI reimplemented with Curses October 2026
 #
 # mika.nokka1@gmail.com October 2026
 #
@@ -21,8 +21,9 @@ import random
 try:
     locale.setlocale(locale.LC_TIME, "fi_FI.UTF-8")
 except locale.Error:
-    print(f"VAROITUS: Suomi localea ei saatu käyttöön: {e}")
+    print(f"VAROITUS: Suomi localea ei saatu käyttöön")
     print(f"Käytössä oleva locale: {locale.setlocale(locale.LC_TIME, None)}")
+    time.sleep(5)
 
 
 map_file = "map.html"
@@ -99,22 +100,41 @@ def PrintAircraftList(stdscr, planes, x1, y1):
         if y1 >= curses.LINES - 1:
             break
 
-        stdscr.addstr(
-            y1, x1,
-            row[:max_width]
-        )
+        stdscr.addstr(y1, x1,row)
         y1 += 1
 
     return y1
 
 
-# --------------------------------------------------
-# PÄÄNÄYTTÖ
-# --------------------------------------------------
+#############################################################################################################
+# MAIN SCREEN LOGIC. like amiga copper list management
+# ###########################################################################################################
 
-def PrintScreen(stdscr, planes,systemmessage):
+def PrintScreen(stdscr, planes,systemmessage,bottommessage):
 
-    ###### systemmessage
+    stdscr.erase()
+    curses.update_lines_cols() 
+    stdscr.box()
+
+    x1=2
+    y1=0
+
+    ### check minimum screen size
+    rows, cols = stdscr.getmaxyx()
+    if rows < 10 or cols < 60:
+        stdscr.erase()
+        viesti = "Window too small - resize"
+        y = rows // 2
+        x = max(0, (cols - len(viesti)) // 2)
+
+        if rows > 0 and cols > 0:
+            stdscr.addnstr(y, x, viesti, max(0, cols - x - 1))
+
+        stdscr.refresh()
+        return
+    ####################
+
+    ###### handle systemmessage
     if not hasattr(PrintScreen, "message"):
         PrintScreen.message = ""
         PrintScreen.message_time = 0
@@ -127,26 +147,18 @@ def PrintScreen(stdscr, planes,systemmessage):
     if time.monotonic() - PrintScreen.message_time >= 10:
         PrintScreen.message = ""
 
-    systemmessage = PrintScreen.message 
-    x1 = 2
-    y1 = 0
+    if PrintScreen.message: 
+        stdscr.addstr(0, 5,PrintScreen.message,curses.A_REVERSE) 
     ######
     
-
-    stdscr.erase()
-    stdscr.box()
-
-    stdscr.addstr(y1, x1,systemmessage,curses.A_BOLD) 
+    ##### clock and date
     y1=y1+1
-     
     now = datetime.datetime.now()
-
     paivays = now.strftime("%d.%m.%Y")
     paivan_nimi = now.strftime("%A")
     kello = now.strftime("%H:%M:%S")
 
     runtime = int(time.monotonic() - StartTime)
-
     hh = runtime // 3600
     mm = (runtime % 3600) // 60
     ss = runtime % 60
@@ -155,46 +167,58 @@ def PrintScreen(stdscr, planes,systemmessage):
         f"{paivan_nimi} {paivays}  {kello}       "
         f"Ajoaika: {hh:02d}:{mm:02d}:{ss:02d}"
     )
-
-    stdscr.addstr(
-        y1, 2,
-        otsikko[:max(0, curses.COLS - 4)],
-        curses.A_BOLD
-    )
+    stdscr.addstr(y1, 2,otsikko,curses.A_BOLD)
+    ##########
+    
+    ############ file infos
     y1 += 2
-
     tiedostot = (
         f"Map file:{map_file}   "
         f"Dump file:{dump_file}   "
         f"Dashboard file:{dashboard_file}"
     )
-
-    stdscr.addstr(
-        y1, x1,
-        tiedostot[:max(0, curses.COLS - x1 - 1)]
-    )
+    stdscr.addstr(y1, x1,tiedostot)
     y1 += 1
 
     ohje = "s - Save data    m - Save map"
-    stdscr.addstr(
-        y1, x1,
-        ohje[:max(0, curses.COLS - x1 - 1)]
-    )
+    stdscr.addstr(y1, x1,ohje)
     y1 += 1
-    
+    ################
 
-    viiva = "-" * max(0, curses.COLS - x1 - 2)
-    stdscr.addstr(y1, x1, viiva)
+    stdscr.addstr(y1, x1, '--------------------------------------------------------------------------------------------------')
     y1 += 1
 
-    y1 = PrintAircraftList(
-        stdscr, planes, x1, y1
-    )
+    y1 = PrintAircraftList(stdscr, planes, x1, y1)
 
     y1 += 2
-
-    if y1 < curses.LINES - 1:
+    if y1 < curses.LINES - 2:
         stdscr.addstr(y1, x1, "Q - lopeta")
+
+    ######handle bottom screen system message 
+
+    if not hasattr(PrintScreen, "bottom_message"):
+            PrintScreen.bottom_message = ""
+            PrintScreen.bottom_message_time = 0
+
+    if bottommessage:
+        if bottommessage != PrintScreen.bottom_message:
+            PrintScreen.bottom_message = bottommessage
+            PrintScreen.bottom_message_time = time.monotonic()
+
+    if time.monotonic() - PrintScreen.bottom_message_time >= 15:
+        PrintScreen.bottom_message = ""
+
+    if PrintScreen.bottom_message:
+        rows, cols = stdscr.getmaxyx()
+        bottom_message = PrintScreen.bottom_message
+        y = rows - 1
+        x = 5
+        stdscr.addstr(y, x, PrintScreen.bottom_message,curses.A_REVERSE)
+
+    ######################
+
+
+
 
     stdscr.refresh()
 
@@ -233,31 +257,18 @@ def CheckQuit(stdscr):
 # --------------------------------------------------
 
 def main(stdscr):
-    minx = 35
-    miny = 14
 
     curses.noecho()
     curses.cbreak()
     stdscr.keypad(True)
     stdscr.nodelay(True)
 
-    x = curses.COLS
-    y = curses.LINES
-
-    if x < minx or y < miny:
-        stdscr.erase()
-        stdscr.addstr(1, 1, "ERROR: Screen too small!")
-        stdscr.addstr(
-            2, 1,
-            f"Need screen at least {minx} x {miny}"
-        )
-        stdscr.refresh()
-        time.sleep(3)
-        return
 
     while True:
         planes = ReadAircraftData()
      
+
+##################################### 
         systemmessage = ""
         if not planes:
             systemmessage = "ERROR: AIRCRAFT DATA NOT FOUND"
@@ -268,9 +279,19 @@ def main(stdscr):
                 "TEST: Signal weak",
                 "TEST: Aircraft data received"
             ])
+######################################
+        bottommessage=""
+        if (random.randint(1, 20) == 1):
+            bottommessage = random.choice([
+                "TEST: Random alarm",
+                "TEST: New plane ever detected detected",
+                "TEST: Signal blaa blaa",
+                "TEST: Bottom message is this"
+            ])
+#######################################
 
-        
-        PrintScreen(stdscr, planes,systemmessage)
+
+        PrintScreen(stdscr, planes,systemmessage,bottommessage)
 
         # Päivitä näyttö noin sekunnin välein.
         for _ in range(10):
