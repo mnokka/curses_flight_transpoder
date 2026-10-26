@@ -13,6 +13,7 @@ import locale
 import json
 import os
 import random
+import logging
 
 # --------------------------------------------------
 # ASETUKSET
@@ -26,15 +27,31 @@ except locale.Error:
     time.sleep(5)
 
 
+
+
+DEBUG_FILE = "debug.log"
 map_file = "map.html"
 dashboard_file = ""
 dump_file = "dump109.log"
+Y1Breaking=2
 
 StartTime = time.monotonic()
 
 JSON_DIR = "./json_data"
 JSON_FILE = os.path.join(JSON_DIR, "aircraft_backup.json")
 EXCEL_FILE = "./aircraftDatabase.csv"
+
+
+
+logging.basicConfig(
+    filename=DEBUG_FILE,
+    level=logging.DEBUG,
+    format="%(asctime)s %(levelname)s: %(message)s"
+)
+
+logging.debug("Program started")
+
+
 
 
 # --------------------------------------------------
@@ -70,7 +87,7 @@ def PrintAircraftList(stdscr, planes, x1, y1):
 
     max_width = max(0, curses.COLS - x1 - 1)
 
-    stdscr.addstr(y1, x1, headers[:max_width])
+    stdscr.addstr(y1, x1, headers)
     y1 += 1
 
     stdscr.addstr(
@@ -97,12 +114,16 @@ def PrintAircraftList(stdscr, planes, x1, y1):
             f"{str(p.get('on_ground', False)):>4}"
         )
 
-        if y1 >= curses.LINES - 1:
+        logging.debug("curses.LINES - 1:  %s",curses.LINES - 1)
+        logging.debug("y1:  %s",y1)
+        if y1 >= curses.LINES -Y1Breaking:
+            logging.debug("Breaking listing of aircrafs, y1 too big %s", y1)
             break
 
         stdscr.addstr(y1, x1,row)
         y1 += 1
-
+    
+    logging.debug("Printing list returns %s", y1)
     return y1
 
 
@@ -121,6 +142,7 @@ def PrintScreen(stdscr, planes,systemmessage,bottommessage):
 
     ### check minimum screen size
     rows, cols = stdscr.getmaxyx()
+    logging.debug("Screen size (rowxcol): %s %s", rows, cols)
     if rows < 10 or cols < 60:
         stdscr.erase()
         viesti = "Window too small - resize"
@@ -198,7 +220,7 @@ def PrintScreen(stdscr, planes,systemmessage,bottommessage):
     y1 = PrintAircraftList(stdscr, planes, x1, y1)
 
     y1 += 2
-    if y1 < curses.LINES - 2:
+    if y1 <= curses.LINES -Y1Breaking:
         stdscr.addstr(y1, x1, "Q - lopeta")
 
     ######handle bottom screen system message 
