@@ -100,16 +100,13 @@ def PrintAircraftList(stdscr, planes, x1, y1):
     max_width = max(0, curses.COLS - x1 - 1)
 
 
-    #stdscr.addstr(y1, x1, headers)
     if max_width > 10:
         stdscr.addnstr(y1, x1, headers, max_width)
     y1 += 1
 
     global headers_len
     headers_len=len(headers)
-    stdscr.addstr(
-        y1, x1,
-        "x" * min(headers_len, max_width-1))
+    stdscr.addstr(y1, x1,"x" * min(headers_len, max_width-1))
     y1 += 1
 
     for p in planes:
@@ -129,18 +126,18 @@ def PrintAircraftList(stdscr, planes, x1, y1):
             f"{str(p.get('on_ground', False)):>4}"
         )
 
-        logging.debug("curses.LINES - 1:  %s",curses.LINES - 1)
-        logging.debug("y1:  %s",y1)
+        #logging.debug("curses.LINES - 1:  %s",curses.LINES - 1)
+        #logging.debug("y1:  %s",y1)
         if y1 >= curses.LINES -Y1Breaking:
             logging.debug("Breaking listing of aircrafs, y1 too big %s", y1)
             break
 
-        #stdscr.addstr(y1, x1,row)
+
         if max_width > 10:
             stdscr.addnstr(y1, x1, row, max_width)
         y1 += 1
     
-    logging.debug("Printing list returns %s", y1)
+    #logging.debug("Printing list returns %s", y1)
     return y1
 
 
@@ -232,20 +229,12 @@ def PrintScreen(stdscr, planes,systemmessage,bottommessage):
     y1 += 1
     ################
 
-    #stdscr.addstr(y1, x1, '--------------------------------------------------------------------------------------------------')
-    #y1 += 1
-
-
     max_width = max(0, curses.COLS - x1 - 1)
     stdscr.addstr(
         y1, x1,
         "v" * min(headers_len, max_width))
     y1 += 1
 
-    #logging.debug("headers_len: %s",headers_len)
-
-    #stdscr.addstr(y1, x1,"Z"*(headers_len-2))
-    #y1 += 1
 
 
     y1 = PrintAircraftList(stdscr, planes, x1, y1)
@@ -287,8 +276,6 @@ def PrintScreen(stdscr, planes,systemmessage,bottommessage):
         stdscr.addstr(y, x, PrintScreen.bottom_message,curses.A_REVERSE)
 
     ######################
-
-
 
 
     stdscr.refresh()

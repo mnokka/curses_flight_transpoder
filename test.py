@@ -13,9 +13,9 @@ os.makedirs(JSON_DIR, exist_ok=True)
 BACKUP_FILE = os.path.join(JSON_DIR, "aircraft_backup.json")
 TMP_FILE    = os.path.join(JSON_DIR, "aircraft_backup.tmp")
 
-PLANE_TTL   = 60
-ADD_PROB    = 0.15
-REMOVE_PROB = 0.2
+PLANE_TTL   = 300
+ADD_PROB    = 0.4
+REMOVE_PROB = 0.08
 
 planes = []
 next_plane_id = 1
