@@ -15,6 +15,17 @@ import os
 import random
 import logging
 
+
+# Screen definition
+#Line               Usage
+#0-beginning	    Otsikko, kellonaika ja tiedostot
+#middlepart     	Konelistaukset (planes)
+#rows - 3	        Q - lopeta
+#rows - 2	        Bottom message
+#rows - 1	        Bottom box part line
+
+
+
 # --------------------------------------------------
 # ASETUKSET
 # --------------------------------------------------
@@ -34,6 +45,7 @@ map_file = "map.html"
 dashboard_file = ""
 dump_file = "dump109.log"
 Y1Breaking=2
+headers_len=0
 
 StartTime = time.monotonic()
 
@@ -87,14 +99,17 @@ def PrintAircraftList(stdscr, planes, x1, y1):
 
     max_width = max(0, curses.COLS - x1 - 1)
 
-    stdscr.addstr(y1, x1, headers)
+
+    #stdscr.addstr(y1, x1, headers)
+    if max_width > 10:
+        stdscr.addnstr(y1, x1, headers, max_width)
     y1 += 1
 
+    global headers_len
+    headers_len=len(headers)
     stdscr.addstr(
-
         y1, x1,
-        "-" * min(len(headers), max_width)
-    )
+        "x" * min(headers_len, max_width-1))
     y1 += 1
 
     for p in planes:
@@ -120,7 +135,9 @@ def PrintAircraftList(stdscr, planes, x1, y1):
             logging.debug("Breaking listing of aircrafs, y1 too big %s", y1)
             break
 
-        stdscr.addstr(y1, x1,row)
+        #stdscr.addstr(y1, x1,row)
+        if max_width > 10:
+            stdscr.addnstr(y1, x1, row, max_width)
         y1 += 1
     
     logging.debug("Printing list returns %s", y1)
@@ -143,7 +160,8 @@ def PrintScreen(stdscr, planes,systemmessage,bottommessage):
     ### check minimum screen size
     rows, cols = stdscr.getmaxyx()
     logging.debug("Screen size (rowxcol): %s %s", rows, cols)
-    if rows < 10 or cols < 60:
+    #if rows < 10 or cols < 60:
+    if rows <= curses.LINES -Y1Breaking or cols < 60:    
         stdscr.erase()
         viesti = "Window too small - resize"
         y = rows // 2
@@ -214,14 +232,32 @@ def PrintScreen(stdscr, planes,systemmessage,bottommessage):
     y1 += 1
     ################
 
-    stdscr.addstr(y1, x1, '--------------------------------------------------------------------------------------------------')
+    #stdscr.addstr(y1, x1, '--------------------------------------------------------------------------------------------------')
+    #y1 += 1
+
+
+    max_width = max(0, curses.COLS - x1 - 1)
+    stdscr.addstr(
+        y1, x1,
+        "v" * min(headers_len, max_width))
     y1 += 1
+
+    #logging.debug("headers_len: %s",headers_len)
+
+    #stdscr.addstr(y1, x1,"Z"*(headers_len-2))
+    #y1 += 1
+
 
     y1 = PrintAircraftList(stdscr, planes, x1, y1)
 
     y1 += 2
+    logging.debug("Q: curses.LINES - Y1Breaking:  %s",curses.LINES - Y1Breaking)
+    logging.debug("Q: y1:  %s",y1)
     if y1 <= curses.LINES -Y1Breaking:
+        logging.debug("Q: tulostetaan")
         stdscr.addstr(y1, x1, "Q - lopeta")
+    else:        
+        logging.debug("Q: EI TULOSTETA")
 
     ######handle bottom screen system message 
 
