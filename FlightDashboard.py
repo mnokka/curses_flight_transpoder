@@ -99,7 +99,6 @@ def PrintAircraftList(stdscr, planes, x1, y1):
 
     max_width = max(0, curses.COLS - x1 - 1)
 
-
     if max_width > 10:
         stdscr.addnstr(y1, x1, headers, max_width)
     y1 += 1
@@ -126,10 +125,15 @@ def PrintAircraftList(stdscr, planes, x1, y1):
             f"{str(p.get('on_ground', False)):>4}"
         )
 
-        #logging.debug("curses.LINES - 1:  %s",curses.LINES - 1)
-        #logging.debug("y1:  %s",y1)
-        if y1 >= curses.LINES -Y1Breaking:
+        rows = curses.LINES
+        last_row = rows-3
+        logging.debug("rows:  %s",rows)
+        logging.debug("y1:  %s",y1)
+        logging.debug("last_row:  %s",last_row)
+
+        if y1 >= last_row:
             logging.debug("Breaking listing of aircrafs, y1 too big %s", y1)
+            logging.debug("---------------------------------------------")
             break
 
 
@@ -239,14 +243,15 @@ def PrintScreen(stdscr, planes,systemmessage,bottommessage):
 
     y1 = PrintAircraftList(stdscr, planes, x1, y1)
 
-    y1 += 2
-    logging.debug("Q: curses.LINES - Y1Breaking:  %s",curses.LINES - Y1Breaking)
-    logging.debug("Q: y1:  %s",y1)
+    #y1 += 2
+    q_row = curses.LINES - 3
+    #logging.debug("Q: curses.LINES - Y1Breaking:  %s",curses.LINES - Y1Breaking)
+    #logging.debug("Q: y1:  %s",y1)
     if y1 <= curses.LINES -Y1Breaking:
-        logging.debug("Q: tulostetaan")
-        stdscr.addstr(y1, x1, "Q - lopeta")
-    else:        
-        logging.debug("Q: EI TULOSTETA")
+        #logging.debug("Q: tulostetaan")
+        stdscr.addstr(q_row, x1, "Q - lopeta")
+    #else:        
+        #logging.debug("Q: EI TULOSTETA")
 
     ######handle bottom screen system message 
 

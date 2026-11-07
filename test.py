@@ -85,7 +85,7 @@ for p in finnair_planes:
     p["last_seen"] = time.time()
     planes.append(p)
 
-for _ in range(2):
+for _ in range(10):
     planes.append(create_plane(next_plane_id))
     next_plane_id += 1
 
